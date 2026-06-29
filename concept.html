@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatWidget — تصوّر الكلاس (Class + Events)</title>
+
+    <link rel="preload" href="assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="assets/css/landing.css">
+</head>
+<body class="lp">
+
+    <div class="xx-banner">🧭 تصوّر للمعاينة — قبل التنفيذ. الكلاس بالأسفل <b>شغّال فعليًا</b>: أنشئ، مرّر خصائص، واستمع للأحداث.</div>
+
+    <section class="lp-hero" id="top">
+        <div class="lp-hero__glow" aria-hidden="true"></div>
+        <div class="lp-container">
+            <div class="lp-badges">
+                <span class="lp-badge">new ChatWidget()</span>
+                <span class="lp-badge">Options</span>
+                <span class="lp-badge">Events / Listeners</span>
+                <span class="lp-badge">Methods</span>
+            </div>
+            <h1 class="lp-hero__title">كلاس باسم متغيّر.<br><span class="lp-grad">خصائص + Listeners.</span></h1>
+            <p class="lp-hero__sub">
+                تنشئ نسخة باسمها، تمرّر لها كل الخصائص، وتستمع لأحداثها (فتح، إغلاق، رسالة، رد) —
+                بأسلوب JavaScript مألوف.
+            </p>
+            <div class="lp-hero__cta">
+                <button class="lp-btn lp-btn--primary" id="demoOpen" type="button">جرّب الكلاس ↙</button>
+                <a class="lp-btn lp-btn--ghost" href="#api">شوف الـ API</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create -->
+    <section class="lp-section" id="api">
+        <div class="lp-container">
+            <h2 class="lp-h2">١) الإنشاء — تمرّر الخصائص</h2>
+            <p class="lp-lead">كائن واحد بكل الإعدادات، بما فيها معالج الردود <code>onMessage</code>.</p>
+            <div class="code" data-code>
+<pre><code>const chat = new ChatWidget({
+  el: '#container',                 // اختياري؛ افتراضيًا داخل &lt;body&gt;
+  identity: { name: 'عيادة الشفاء', avatar: 'logo.png', status: 'متصل الآن' },
+  theme:    { primary: '#0ea5e9', accent: '#06b6d4', radius: '22px' },
+  layout:   { side: 'left', fabBottom: '1.5rem' },
+  fab:      { icon: 'headset', shape: 'rounded' },
+  send:     { icon: 'send', rotate: true },
+  features: { history: true, suggestions: true },
+  behavior: { welcome: 'أهلاً بك 👋', typeSpeed: 20 },
+
+  // معالج الردود (يربط الباك-إند) — أو responses كخريطة JSON
+  onMessage: async (text) => {
+    const res = await fetch('/api/chat', { method:'POST', body: JSON.stringify({ text }) });
+    return await res.json();        // { type:'text'|'image'|'carousel'|... }
+  },
+});</code></pre>
+                <button class="code__copy" type="button" aria-label="نسخ">نسخ</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Listeners -->
+    <section class="lp-section lp-section--alt" id="events">
+        <div class="lp-container">
+            <h2 class="lp-h2">٢) الاستماع للأحداث (Listeners)</h2>
+            <p class="lp-lead">سلسلة قابلة للربط <code>.on()</code> / <code>.off()</code>.</p>
+            <div class="code" data-code>
+<pre><code>chat
+  .on('ready',   ()      => console.log('جاهز'))
+  .on('open',    ()      => console.log('فُتحت المحادثة'))
+  .on('close',   ()      => console.log('أُغلقت'))
+  .on('message', (text)  => console.log('المستخدم:', text))
+  .on('reply',   (resp)  => console.log('رد البوت:', resp));
+
+chat.off('open', handler);   // إلغاء الاستماع</code></pre>
+                <button class="code__copy" type="button" aria-label="نسخ">نسخ</button>
+            </div>
+
+            <div class="lp-tables" style="margin-top:1.5rem">
+                <div class="lp-tablecard">
+                    <h3>events</h3>
+                    <table class="lp-table">
+                        <tr><td>ready</td><td>الويدجت جاهز</td></tr>
+                        <tr><td>open / close</td><td>فتح / إغلاق</td></tr>
+                        <tr><td>message</td><td>أرسل المستخدم رسالة (text)</td></tr>
+                        <tr><td>reply</td><td>ردّ البوت (response)</td></tr>
+                    </table>
+                </div>
+                <div class="lp-tablecard">
+                    <h3>methods</h3>
+                    <table class="lp-table">
+                        <tr><td>open() · close() · toggle()</td><td>تحكّم في الظهور</td></tr>
+                        <tr><td>send(text)</td><td>إرسال رسالة مستخدم</td></tr>
+                        <tr><td>reply(response)</td><td>دفع رد بأي قالب</td></tr>
+                        <tr><td>setTheme · setIdentity</td><td>تعديل لحظي</td></tr>
+                        <tr><td>setFeatures · setLayout</td><td>تعديل لحظي</td></tr>
+                        <tr><td>update(options)</td><td>تحديث أي خصائص</td></tr>
+                        <tr><td>clear()</td><td>مسح المحادثة</td></tr>
+                    </table>
+                </div>
+                <div class="lp-tablecard">
+                    <h3>properties</h3>
+                    <table class="lp-table">
+                        <tr><td>chat.isOpen</td><td>هل المحادثة مفتوحة</td></tr>
+                        <tr><td>chat.options</td><td>الخصائص الحالية</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live demo -->
+    <section class="lp-section" id="demo">
+        <div class="lp-container">
+            <h2 class="lp-h2">٣) تجربة حيّة — شوف الـ Listeners تشتغل</h2>
+            <p class="lp-lead">اضغط الأزرار (تنادي ميثودز <code>chat</code>) وراقب سجل الأحداث.</p>
+
+            <div class="demo">
+                <div class="demo__panel">
+                    <h3>تحكّم بالـ instance</h3>
+                    <div class="demo__btns">
+                        <button class="pg__chip" id="dOpen">chat.open()</button>
+                        <button class="pg__chip" id="dClose">chat.close()</button>
+                        <button class="pg__chip" id="dSendMap">chat.send('الموقع')</button>
+                        <button class="pg__chip" id="dSendCarousel">chat.send('معرض')</button>
+                        <button class="pg__chip" id="dReply">chat.reply({...})</button>
+                        <button class="pg__chip" id="dTheme">chat.setTheme()</button>
+                        <button class="pg__chip" id="dName">chat.setIdentity()</button>
+                        <button class="pg__chip" id="dClear">chat.clear()</button>
+                    </div>
+                </div>
+                <div class="demo__panel">
+                    <h3>سجل الأحداث (Listeners)</h3>
+                    <div class="evtlog" id="evtlog"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== Live widget markup ===================== -->
+    <div id="ctaMessage" class="cta" role="status">
+        <div class="cta__text">أهلاً! عندك استفسار طبي؟ احنا هنا للمساعدة!</div>
+        <button id="closeCtaBtn" class="cta__close" type="button" aria-label="إغلاق رسالة الترحيب">
+            <svg class="icon icon-md" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+        <div class="cta__arrow" aria-hidden="true"></div>
+    </div>
+
+    <button id="chatToggleBtn" class="fab" type="button" aria-label="فتح أو إغلاق المحادثة" aria-expanded="false">
+        <svg id="chatIconOpen" class="icon icon-xl fab__icon fab__icon--open" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <svg id="chatIconClose" class="icon icon-xl fab__icon fab__icon--close is-hidden" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 9 6 6 6-6"/>
+        </svg>
+        <span id="unreadBadge" class="fab__badge" aria-live="polite" aria-label="رسائل غير مقروءة">0</span>
+    </button>
+
+    <section id="chatWidget" class="widget" role="dialog" aria-label="نافذة المحادثة" aria-modal="false">
+        <header class="widget__header">
+            <div class="avatar">
+                <div class="avatar__circle" id="botAvatar">
+                    <svg class="icon icon-lg" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/>
+                        <path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+                    </svg>
+                </div>
+                <span class="avatar__status" aria-hidden="true"></span>
+            </div>
+            <div>
+                <h2 class="widget__title" id="botName">المساعد الطبي الذكي</h2>
+                <p class="widget__subtitle">
+                    <span class="pulse" aria-hidden="true"><span class="pulse__ping"></span><span class="pulse__dot"></span></span>
+                    <span id="botStatus">متصل الآن</span>
+                </p>
+            </div>
+            <div class="widget__actions">
+                <button id="fullscreenQuickBtn" class="menu__btn" type="button" aria-label="ملء الشاشة" title="ملء الشاشة">
+                    <svg id="fsQuickIconMax" class="icon icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+                        <path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+                    </svg>
+                    <svg id="fsQuickIconMin" class="icon icon-md is-hidden" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/>
+                        <path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>
+                    </svg>
+                </button>
+                <div class="menu">
+                    <button id="menuBtn" class="menu__btn" type="button" aria-label="خيارات" aria-haspopup="true" aria-expanded="false">
+                        <svg class="icon icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+                        </svg>
+                    </button>
+                    <div id="dropdownMenu" class="dropdown is-hidden">
+                        <button id="newChatBtn" class="dropdown__item" type="button">
+                            <span>محادثة جديدة</span>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        </button>
+                        <button id="historyBtn" class="dropdown__item" type="button">
+                            <span>سجل المحادثات</span>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>
+                            </svg>
+                        </button>
+                        <button id="toggleFullscreen" class="dropdown__item" type="button">
+                            <span id="fsLabel">ملء الشاشة</span>
+                            <svg id="fsIconMax" class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+                                <path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+                            </svg>
+                            <svg id="fsIconMin" class="icon icon-sm is-hidden" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/>
+                                <path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>
+                            </svg>
+                        </button>
+                        <button id="clearChatBtn" class="dropdown__item" type="button">
+                            <span>مسح المحادثة</span>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 6h18"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                <line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>
+                            </svg>
+                        </button>
+                        <button id="closeWidgetBtn" class="dropdown__item dropdown__item--danger" type="button">
+                            <span>إغلاق الشات</span>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="chatMessages" class="messages" aria-label="الرسائل"></div>
+        <div id="chatLiveRegion" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+        <div id="historyPanel" class="history is-hidden" role="dialog" aria-label="سجل المحادثات">
+            <div class="history__head">
+                <button id="historyBack" class="history__back" type="button" aria-label="رجوع">
+                    <svg class="icon icon-md history__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <h3 class="history__title">سجل المحادثات</h3>
+                <button id="historyNewBtn" class="history__new" type="button">+ جديدة</button>
+            </div>
+            <div id="historyList" class="history__list"></div>
+        </div>
+
+        <div class="composer">
+            <form id="chatForm" class="composer__form">
+                <button type="button" id="attachBtn" class="composer__attach" aria-label="إرفاق ملف">
+                    <svg class="icon icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                </button>
+                <label for="messageInput" class="is-hidden">اكتب رسالتك</label>
+                <textarea id="messageInput" class="composer__input" placeholder="اكتب رسالتك هنا..." rows="1" autocomplete="off"></textarea>
+                <button type="submit" id="sendBtn" class="composer__send" aria-label="إرسال">
+                    <svg class="icon icon-md" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Preview scaffold (becomes ONE bundle in production) -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/lightbox.js"></script>
+    <script src="assets/js/carousel.js"></script>
+    <script src="assets/js/slider.js"></script>
+    <script src="assets/js/messages.js"></script>
+    <script src="assets/js/bot.js"></script>
+    <script src="assets/js/app.js"></script>
+
+    <!-- The class concept -->
+    <script src="assets/js/landing-copy.js"></script>
+    <script src="chat-widget-class.js"></script>
+
+    <!-- ===== This is exactly how a developer would use it ===== -->
+    <script>
+        const chat = new ChatWidget({
+            identity: { name: 'عيادة الشفاء', status: 'متصل الآن' },
+            theme:    { primary: '#0ea5e9', accent: '#06b6d4', userBubble: ['#0ea5e9', '#2563eb'], radius: '22px' },
+            fab:      { icon: 'headset', shape: 'rounded' },
+            features: { history: true, suggestions: true },
+            behavior: { welcome: 'أهلاً بك في عيادة الشفاء 👋 كيف أقدر أساعدك؟', typeSpeed: 20 },
+            onMessage: function (text) {
+                var t = (text || '').toLowerCase();
+                if (/موقع|خريطة/.test(t)) return { type: 'embed', text: 'موقعنا 📍', embed: {
+                    src: 'https://www.openstreetmap.org/export/embed.html?bbox=31.198%2C30.016%2C31.226%2C30.037&layer=mapnik&marker=30.0264%2C31.2122',
+                    title: 'الموقع', caption: 'عيادة الشفاء', openUrl: 'https://www.openstreetmap.org/?mlat=30.0264&mlon=31.2122#map=15/30.0264/31.2122' } };
+                if (/معرض|كاروسيل/.test(t)) return { type: 'carousel', text: 'اسحب أفقيًا 👈', images: [
+                    { src: 'assets/images/heart.svg', alt: 'القلب', caption: 'صحة القلب' },
+                    { src: 'assets/images/pills.svg', alt: 'الأدوية', caption: 'الأدوية' },
+                    { src: 'assets/images/nutrition.svg', alt: 'التغذية', caption: 'التغذية' },
+                    { src: 'assets/images/sleep.svg', alt: 'النوم', caption: 'النوم' } ] };
+                if (/صورة|نصيحة/.test(t)) return { type: 'image', text: 'نصيحة اليوم 🖼️', image: { src: 'assets/images/heart.svg', alt: 'القلب', caption: 'صحة القلب' } };
+                return { type: 'text', text: 'شكراً لتواصلك مع عيادة الشفاء! 🌿' };
+            },
+        });
+
+        /* ---- Listen to the events and print them to the log ---- */
+        var logEl = document.getElementById('evtlog');
+        function logEvent(type, text) {
+            var row = document.createElement('div');
+            row.className = 'evt';
+            var tag = document.createElement('span');
+            tag.className = 'evt__tag evt__tag--' + type;
+            tag.textContent = type;
+            var msg = document.createElement('span');
+            msg.textContent = text;
+            var time = document.createElement('span');
+            time.className = 'evt__time';
+            time.textContent = new Date().toLocaleTimeString('ar-EG');
+            row.appendChild(tag); row.appendChild(msg); row.appendChild(time);
+            logEl.appendChild(row);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        chat
+            .on('ready',   function () { logEvent('ready', 'الويدجت جاهز'); })
+            .on('open',    function () { logEvent('open', 'فُتحت المحادثة'); })
+            .on('close',   function () { logEvent('close', 'أُغلقت المحادثة'); })
+            .on('message', function (text) { logEvent('message', 'المستخدم: ' + text); })
+            .on('reply',   function () { logEvent('reply', 'ردّ البوت ✓'); });
+
+        /* ---- Demo buttons (call instance methods) ---- */
+        document.getElementById('demoOpen').onclick = function () { chat.open(); };
+        document.getElementById('dOpen').onclick = function () { chat.open(); };
+        document.getElementById('dClose').onclick = function () { chat.close(); };
+        document.getElementById('dSendMap').onclick = function () { chat.send('أين الموقع؟'); };
+        document.getElementById('dSendCarousel').onclick = function () { chat.send('اعرض معرض الصور'); };
+        document.getElementById('dReply').onclick = function () { chat.open(); chat.reply({ type: 'text', text: 'رسالة مدفوعة عبر chat.reply() 📨' }); };
+        document.getElementById('dTheme').onclick = function () { chat.setTheme({ primary: '#e11d48', accent: '#f59e0b' }); };
+        document.getElementById('dName').onclick = function () { chat.setIdentity({ name: 'د. سارة', status: 'تكتب الآن…' }); };
+        document.getElementById('dClear').onclick = function () { chat.clear(); };
+    </script>
+</body>
+</html>

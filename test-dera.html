@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeraChat — test harness</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; background: #f1f5f9; min-height: 200vh; }
+        h1 { color: #0f172a; }
+    </style>
+</head>
+<body>
+    <h1>DeraChat test harness</h1>
+    <p>Two independent instances should appear (left = blue, right = rose).</p>
+
+    <script src="dera-chat.js"></script>
+    <script>
+        // event capture for tests
+        window.__log = [];
+        function rec(inst, ev) { window.__log.push(inst + ':' + ev); }
+
+        // Instance A (left, blue, RTL)
+        window.chatA = new DeraChat({
+            dir: 'rtl',
+            theme: { primary: '#3b82f6', accent: '#2dd4bf', radius: '24px', fontUrl: 'assets/fonts/cairo-arabic.woff2' },
+            layout: { side: 'left' },
+            identity: { name: 'المساعد أ', status: 'متصل الآن' },
+            fab: { icon: 'message', shape: 'round' },
+            behavior: { welcome: 'أهلاً من النسخة أ 👋', placeholder: 'اكتب هنا…' },
+            behavior: {
+                welcome: 'أهلاً من النسخة أ 👋', placeholder: 'اكتب هنا…',
+                gallery: { columns: 3, maxVisible: 4 }
+            },
+            onMessage: function (text) {
+                var imgs = [
+                    { src: 'assets/images/heart.svg', alt: 'القلب', caption: 'صحة القلب' },
+                    { src: 'assets/images/pills.svg', alt: 'الأدوية', caption: 'الأدوية' },
+                    { src: 'assets/images/nutrition.svg', alt: 'التغذية', caption: 'التغذية' },
+                    { src: 'assets/images/sleep.svg', alt: 'النوم', caption: 'النوم' },
+                    { src: 'assets/images/vaccine.svg', alt: 'اللقاحات', caption: 'اللقاحات' },
+                    { src: 'assets/images/hydration.svg', alt: 'الماء', caption: 'الترطيب' }
+                ];
+                if (/image|صورة/i.test(text)) return { type: 'image', text: 'نصيحة بصورة', image: imgs[0] };
+                if (/carousel|معرض/i.test(text)) return { type: 'carousel', text: 'معرض', images: imgs };
+                if (/slider|سلايدر/i.test(text)) return { type: 'slider', text: 'سلايدر', images: imgs };
+                if (/gallery|ألبوم/i.test(text)) return { type: 'gallery', text: 'ألبوم', images: imgs };
+                if (/map|موقع/i.test(text)) return { type: 'embed', text: 'الموقع 📍', embed: { src: 'https://www.openstreetmap.org/export/embed.html?bbox=31.198%2C30.016%2C31.226%2C30.037&layer=mapnik&marker=30.0264%2C31.2122', caption: 'العيادة', openUrl: 'https://www.openstreetmap.org/?mlat=30.0264&mlon=31.2122#map=15/30.0264/31.2122' } };
+                return { type: 'text', text: 'رد النسخة أ على: ' + text };
+            }
+        });
+        ['ready', 'open', 'close', 'message', 'reply', 'typing:start', 'typing:end'].forEach(function (ev) {
+            chatA.on(ev, function () { rec('A', ev); });
+        });
+
+        // Instance B (right, rose, LTR)
+        window.chatB = new DeraChat({
+            dir: 'ltr',
+            theme: { primary: '#e11d48', accent: '#f59e0b', radius: '10px' },
+            layout: { side: 'right' },
+            identity: { name: 'Bot B', status: 'Online' },
+            fab: { icon: 'headset', shape: 'rounded' },
+            send: { icon: 'arrow', rotate: false },
+            behavior: { welcome: 'Hello from instance B!' },
+            responses: {
+                'price|cost': { type: 'text', text: 'Our plans start at $9/mo.' },
+                '*': { type: 'text', text: 'Instance B got: ' }
+            }
+        });
+        ['ready', 'open', 'message', 'reply'].forEach(function (ev) {
+            chatB.on(ev, function () { rec('B', ev); });
+        });
+    </script>
+</body>
+</html>

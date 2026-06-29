@@ -1,0 +1,12 @@
+# Editor / tooling
+.claude/
+.vscode/
+.idea/
+
+# Dependencies / build caches
+node_modules/
+
+# OS / logs
+.DS_Store
+Thumbs.db
+*.log
