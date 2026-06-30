@@ -112,7 +112,7 @@
             <h1>A chat widget<br><span class="grad">in a single file.</span></h1>
             <p class="sub">
                 Drop one script on any page and <code>new DeraChat({ … })</code>. Fully isolated
-                (Shadow DOM), themeable, event-driven, with 6 reply templates and a built-in lightbox.
+                (Shadow DOM), themeable, event-driven, with 7 reply templates and a built-in lightbox.
             </p>
             <div class="cta">
                 <button class="btn btn--primary" id="open-2" type="button">Try the widget ↘</button>
@@ -126,7 +126,7 @@
             <h2>Everything included</h2>
             <p class="lead">Batteries-included, isolated, and one dependency-free file.</p>
             <div class="grid">
-                <div class="card"><div class="ic">💬</div><h3>6 reply templates</h3><p>text, image + caption, embed (maps), carousel, autoplay slider, and a grid gallery with “+N”.</p></div>
+                <div class="card"><div class="ic">💬</div><h3>7 reply templates</h3><p>text, image + caption, embed (maps), carousel, autoplay slider, grid gallery with “+N”, and downloadable file attachments.</p></div>
                 <div class="card"><div class="ic">🧩</div><h3>Single file</h3><p>One <code>dera-chat.min.js</code> — CSS and icons inlined. Works via UMD, ESM, or a plain script tag.</p></div>
                 <div class="card"><div class="ic">🛡️</div><h3>Shadow DOM</h3><p>Total style isolation. The host page can’t break it and it can’t leak out. Run many at once.</p></div>
                 <div class="card"><div class="ic">🎧</div><h3>Events</h3><p><code>.on('message') .on('reply') .on('lightbox:open')</code> … with cancelable hooks like <code>beforesend</code>.</p></div>
@@ -186,6 +186,7 @@
                         <button class="chip" data-send="show the gallery">gallery</button>
                         <button class="chip" data-send="show a slider">slider</button>
                         <button class="chip" data-send="show an image">image</button>
+                        <button class="chip" data-send="show files">files</button>
                     </div>
                     <div class="row" style="margin-top:.5rem">
                         <button class="btn btn--primary" id="open-3" type="button">Open chat</button>
@@ -267,7 +268,9 @@
 
 { type: 'slider',   text: 'Slideshow', images: [ … ] }
 
-{ type: 'gallery',  text: 'Album', images: [ …many… ] }   // shows N tiles + “+N”</code></pre>
+{ type: 'gallery',  text: 'Album', images: [ …many… ] }   // shows N tiles + “+N”
+
+{ type: 'files', text: 'Downloads', files: [ { name:'guide.pdf', url:'/guide.pdf', size:'245 KB' }, … ] }</code></pre>
                 <button class="copy" type="button">Copy</button>
             </div>
         </div>
@@ -305,7 +308,8 @@
                 suggestions: [
                     { label: '🗺️ Map', value: 'show me the map' },
                     { label: '🎠 Carousel', value: 'show a carousel' },
-                    { label: '🖼️ Gallery', value: 'show the gallery' }
+                    { label: '🖼️ Gallery', value: 'show the gallery' },
+                    { label: '📎 Files', value: 'show files' }
                 ],
                 gallery: { columns: 3, maxVisible: 4 }
             },
@@ -316,6 +320,10 @@
                 if (/gallery|album/.test(t)) return { type: 'gallery', text: 'Tap any tile', images: IMG.concat(IMG.slice(0, 2)) };
                 if (/slider|slideshow/.test(t)) return { type: 'slider', text: 'Auto-playing slideshow', images: IMG };
                 if (/image|photo|tip/.test(t)) return { type: 'image', text: 'Tip of the day 🖼️', image: IMG[0] };
+                if (/file|download|attach|document/.test(t)) return { type: 'files', text: 'Here are your downloads 📎', files: [
+                    { name: 'getting-started.txt', url: 'assets/files/getting-started.txt', size: '0.6 KB', ext: 'txt' },
+                    { name: 'reply-templates.csv', url: 'assets/files/reply-templates.csv', size: '0.4 KB', ext: 'csv' }
+                ] };
                 return { type: 'text', text: 'You said: ' + text };
             }
         });

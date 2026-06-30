@@ -10,6 +10,7 @@ export interface DeraResponse {
   image?: DeraImage;
   embed?: { src: string; title?: string; caption?: string; openUrl?: string; kind?: string };
   images?: DeraImage[];
+  files?: { name: string; url: string; size?: string; ext?: string }[];
   [key: string]: any;
 }
 
@@ -57,7 +58,7 @@ export type DeraEvent =
   | 'beforesend' | 'message' | 'beforereply' | 'reply'
   | 'typing:start' | 'typing:end' | 'messagerendered'
   | 'clear' | 'newconversation' | 'attach' | 'suggestion:click'
-  | 'image:click' | 'lightbox:open' | 'lightbox:close' | 'lightbox:change'
+  | 'image:click' | 'file:download' | 'lightbox:open' | 'lightbox:close' | 'lightbox:change'
   | 'carousel:change' | 'slider:change' | 'embed:open'
   | 'menu:open' | 'menu:close' | 'history:open' | 'history:close' | 'history:select'
   | 'unread' | 'cta:close' | 'themechange' | 'identitychange' | 'featurechange'

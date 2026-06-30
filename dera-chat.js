@@ -163,6 +163,16 @@
         ".gallery__cell:hover .gallery__img{transform:scale(1.06);}",
         ".gallery__more{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;font-weight:700;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);}",
 
+        /* files (downloadable attachments) */
+        ".m-files{display:flex;flex-direction:column;gap:.5rem;}",
+        ".m-file{display:flex;align-items:center;gap:.75rem;padding:.6rem .7rem;background:rgba(255,255,255,.75);border:1px solid var(--dc-gray-100);border-radius:.65rem;}",
+        ".m-file__ic{width:2.6rem;height:2.6rem;flex-shrink:0;display:grid;place-items:center;border-radius:.5rem;color:#fff;font-size:.6rem;font-weight:800;}",
+        ".m-file__meta{flex:1;min-width:0;}",
+        ".m-file__name{font-size:.85rem;font-weight:600;color:var(--dc-gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+        ".m-file__size{font-size:.72rem;color:var(--dc-gray-500);}",
+        ".m-file__dl{flex-shrink:0;width:2.2rem;height:2.2rem;display:flex;align-items:center;justify-content:center;color:var(--dc-primary);background:var(--dc-blue-50);border-radius:9999px;transition:background-color .2s,transform .15s;}",
+        ".m-file__dl:hover{background:var(--dc-primary);color:#fff;transform:translateY(-1px);}",
+
         /* rtl mirror */
         ":host([dir='rtl']) .carousel__icon,:host([dir='rtl']) .slider__icon,:host([dir='rtl']) .history__icon,:host([dir='rtl']) .lightbox__nav .icon{transform:scaleX(-1);}",
 
@@ -242,7 +252,9 @@
         zoomIn: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/>',
         zoomOut: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/>',
         reset: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
-        externalLink: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+        externalLink: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+        file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v6h6"/>',
+        download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>'
     };
     var FAB_ICON = { message: 'message', chat: 'chat', bot: 'bot', help: 'help', sparkles: 'sparkles', headset: 'headset' };
     var SEND_ICON = { send: 'send', sendHorizontal: 'sendHorizontal', arrow: 'arrow', chevron: 'chevronUp' };
@@ -824,6 +836,7 @@
             case 'carousel': return this._renderCarousel(res);
             case 'slider': return this._renderSlider(res);
             case 'gallery': return this._renderGallery(res);
+            case 'files': case 'file': return this._renderFiles(res);
             case 'text':
             default: return this._renderText(res);
         }
@@ -836,6 +849,7 @@
             case 'carousel': return pre + 'Carousel with ' + n + ' images';
             case 'slider': return pre + 'Slideshow with ' + n + ' images';
             case 'gallery': return pre + 'Gallery with ' + n + ' images';
+            case 'files': case 'file': return pre + ((res.files ? res.files.length : (res.file ? 1 : 0))) + ' attached file(s)';
             default: return res.text || '';
         }
     };
@@ -915,6 +929,40 @@
         })(i);
         bubble.appendChild(grid); row.appendChild(bubble); this.els.messages.appendChild(row); this._scroll();
         this.emit('messagerendered', { type: 'gallery', element: row });
+        return Promise.resolve();
+    };
+    DeraChat.prototype._fileColor = function (ext) {
+        var m = {
+            pdf: '#dc2626', doc: '#2563eb', docx: '#2563eb', txt: '#475569', rtf: '#475569',
+            xls: '#16a34a', xlsx: '#16a34a', csv: '#16a34a', ppt: '#ea580c', pptx: '#ea580c',
+            zip: '#d97706', rar: '#d97706', '7z': '#d97706', png: '#7c3aed', jpg: '#7c3aed',
+            jpeg: '#7c3aed', gif: '#7c3aed', svg: '#7c3aed', webp: '#7c3aed', mp3: '#db2777',
+            wav: '#db2777', mp4: '#4f46e5', mov: '#4f46e5', json: '#0891b2', xml: '#0891b2'
+        };
+        return m[(ext || '').toLowerCase()] || '#64748b';
+    };
+    DeraChat.prototype._renderFiles = function (res) {
+        var self = this, files = res.files || (res.file ? [res.file] : []), row = this._row('bot'), bubble = this._mediaBubble(res);
+        var list = h('div', { 'class': 'm-files' });
+        files.forEach(function (f) {
+            var name = f.name || 'file';
+            var ext = (f.ext || (name.indexOf('.') > -1 ? name.split('.').pop() : '')).toLowerCase();
+            var url = safeUrl(f.url, false);
+            var badge = h('span', { 'class': 'm-file__ic', text: (ext || 'file').toUpperCase().slice(0, 4) });
+            badge.style.background = self._fileColor(ext);
+            var meta = h('div', { 'class': 'm-file__meta' }, [
+                h('div', { 'class': 'm-file__name', title: name, text: name }),
+                h('div', { 'class': 'm-file__size', text: f.size ? f.size : (ext ? ext.toUpperCase() + ' file' : 'File') })
+            ]);
+            var dl = h('a', {
+                'class': 'm-file__dl', href: url || '#', download: f.name || '', target: '_blank',
+                rel: 'noopener', 'aria-label': 'Download ' + name,
+                onclick: function () { self.emit('file:download', { name: name, url: url }); }
+            }, [svgEl(ICONS.download, 'icon icon-md')]);
+            list.appendChild(h('div', { 'class': 'm-file' }, [badge, meta, dl]));
+        });
+        bubble.appendChild(list); row.appendChild(bubble); this.els.messages.appendChild(row); this._scroll();
+        this.emit('messagerendered', { type: 'files', element: row });
         return Promise.resolve();
     };
 

@@ -1,0 +1,8 @@
+type,description,fields
+text,Plain text with typewriter,text
+image,Image + caption (lightbox),image{src,alt,caption}
+embed,Sandboxed iframe (maps/video),embed{src,title,caption,openUrl}
+carousel,Side-by-side scrollable strip,images[]
+slider,Auto-playing cross-fade,images[]
+gallery,Grid with +N overflow,images[]
+files,Downloadable attachments,files[]{name,url,size,ext}

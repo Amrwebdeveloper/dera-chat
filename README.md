@@ -42,12 +42,13 @@ Loads as UMD (`window.DeraChat`), CommonJS, or AMD. Optional Cairo font via `the
 { type:'carousel', text, images:[{src,alt,caption}, …] }             // drag/scroll strip
 { type:'slider',   text, images:[…] }                                // autoplay cross-fade
 { type:'gallery',  text, images:[…] }                                // grid with “+N”
+{ type:'files',    text, files:[{ name, url, size, ext }, …] }       // downloadable attachments
 ```
 
 ## Events
 `ready` · `open` · `close` · `message` · `reply` · `beforesend`/`beforereply` (cancelable) ·
 `typing:start`/`typing:end` · `messagerendered` · `clear` · `newconversation` · `attach` ·
-`suggestion:click` · `image:click` · `lightbox:open`/`:close`/`:change` · `carousel:change` ·
+`suggestion:click` · `image:click` · `file:download` · `lightbox:open`/`:close`/`:change` · `carousel:change` ·
 `slider:change` · `embed:open` · `menu:open`/`:close` · `history:open`/`:close`/`:select` ·
 `unread` · `cta:close` · `themechange`/`identitychange`/`featurechange` · `error` · `*` (all).
 

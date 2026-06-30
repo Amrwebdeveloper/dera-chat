@@ -1,0 +1,17 @@
+DeraChat — Getting Started
+==========================
+
+1) Include the bundle:
+   <script src="dera-chat.min.js"></script>
+
+2) Create an instance:
+   const chat = new DeraChat({
+     identity: { name: 'Acme Support' },
+     onMessage: async (text) => ({ type: 'text', text: 'Hi!' }),
+   });
+
+3) Listen to events:
+   chat.on('message', (e) => console.log(e.text));
+
+That's it — one file, zero dependencies, fully isolated (Shadow DOM).
+Docs & live demo: https://amrwebdeveloper.github.io/dera-chat/
