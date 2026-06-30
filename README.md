@@ -4,7 +4,8 @@ A drop-in chat widget in a **single file**. Named class, options in, events out.
 Fully isolated with **Shadow DOM**, themeable, RTL/LTR, no CDN, XSS-safe.
 
 ```html
-<script src="dera-chat.min.js"></script>
+<!-- via jsDelivr CDN (pinned to a version) -->
+<script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.0.0/dera-chat.min.js"></script>
 <script>
   const chat = new DeraChat({
     identity: { name: 'Acme Support', avatar: 'logo.png' },
@@ -20,6 +21,12 @@ Fully isolated with **Shadow DOM**, themeable, RTL/LTR, no CDN, XSS-safe.
   chat.on('message', (e) => console.log('user:', e.text));
   chat.on('reply',   (e) => console.log('bot:', e.response));
 </script>
+```
+
+### CDN (jsDelivr)
+```
+https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.0.0/dera-chat.min.js   # pinned (recommended)
+https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@main/dera-chat.min.js     # latest on main
 ```
 
 ## Files
