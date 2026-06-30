@@ -1,0 +1,43 @@
+{
+  "name": "dera-chat",
+  "version": "1.1.0",
+  "description": "A self-contained, themeable chat widget in a single file — Shadow DOM, options + events, 7 reply templates, RTL/LTR, zero dependencies.",
+  "main": "dist/dera-chat.js",
+  "module": "dist/dera-chat.js",
+  "unpkg": "dist/dera-chat.min.js",
+  "jsdelivr": "dist/dera-chat.min.js",
+  "types": "dist/dera-chat.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "terser dist/dera-chat.js -c -m -o dist/dera-chat.min.js"
+  },
+  "keywords": [
+    "chat",
+    "chat-widget",
+    "chatbot",
+    "livechat",
+    "messenger",
+    "customer-support",
+    "shadow-dom",
+    "web-component",
+    "vanilla-js",
+    "zero-dependency",
+    "rtl",
+    "embeddable"
+  ],
+  "author": "Amrwebdeveloper",
+  "license": "MIT",
+  "homepage": "https://amrwebdeveloper.github.io/dera-chat/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amrwebdeveloper/dera-chat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Amrwebdeveloper/dera-chat/issues"
+  },
+  "devDependencies": {
+    "terser": "^5.31.0"
+  }
+}

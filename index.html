@@ -96,7 +96,8 @@
             <a href="#api">API</a>
             <a href="#templates">Templates</a>
         </div>
-        <button class="btn btn--ghost" id="open-1" type="button">Try it</button>
+        <a class="btn btn--ghost" href="https://github.com/Amrwebdeveloper/dera-chat" target="_blank" rel="noopener">GitHub ↗</a>
+        <button class="btn btn--primary" id="open-1" type="button">Try it</button>
     </nav>
 
     <section class="hero" id="top">
@@ -144,7 +145,7 @@
             <p class="lead">Include the bundle, then create an instance with your options.</p>
             <div class="code" data-code>
 <pre><code>&lt;!-- via jsDelivr CDN (pinned to a version) --&gt;
-&lt;script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.0.0/dera-chat.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.1.0/dist/dera-chat.min.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   const chat = new DeraChat({
     identity: { name: 'Acme Support', avatar: 'logo.png' },
@@ -178,8 +179,12 @@
                     <div class="row" id="sw"></div>
                     <span class="lbl">Side</span>
                     <div class="row"><button class="chip" data-side="left">left</button><button class="chip" data-side="right">right</button></div>
+                    <span class="lbl">Direction</span>
+                    <div class="row"><button class="chip" data-dir="ltr">LTR</button><button class="chip" data-dir="rtl">RTL</button></div>
                     <span class="lbl">FAB icon</span>
                     <div class="row"><button class="chip" data-fab="message">message</button><button class="chip" data-fab="headset">headset</button><button class="chip" data-fab="sparkles">sparkles</button></div>
+                    <span class="lbl">FAB image</span>
+                    <div class="row"><button class="chip" data-fab-image="demo/images/heart.svg">use image</button><button class="chip" data-fab-image="">icon</button></div>
                     <span class="lbl">Try a reply</span>
                     <div class="row">
                         <button class="chip" data-send="show me the map">map</button>
@@ -286,17 +291,17 @@
         </div>
     </footer>
 
-    <!-- The single bundle -->
-    <script src="dera-chat.js"></script>
+    <!-- The single bundle (served from dist/) -->
+    <script src="dist/dera-chat.js"></script>
     <script>
         // ===== This is exactly how you'd use it =====
         var IMG = [
-            { src: 'assets/images/heart.svg', alt: 'Heart health', caption: 'Heart health' },
-            { src: 'assets/images/pills.svg', alt: 'Medication', caption: 'Medication' },
-            { src: 'assets/images/nutrition.svg', alt: 'Nutrition', caption: 'Balanced nutrition' },
-            { src: 'assets/images/vaccine.svg', alt: 'Vaccines', caption: 'Vaccines' },
-            { src: 'assets/images/sleep.svg', alt: 'Sleep', caption: 'Healthy sleep' },
-            { src: 'assets/images/hydration.svg', alt: 'Hydration', caption: 'Drink water' }
+            { src: 'demo/images/heart.svg', alt: 'Heart health', caption: 'Heart health' },
+            { src: 'demo/images/pills.svg', alt: 'Medication', caption: 'Medication' },
+            { src: 'demo/images/nutrition.svg', alt: 'Nutrition', caption: 'Balanced nutrition' },
+            { src: 'demo/images/vaccine.svg', alt: 'Vaccines', caption: 'Vaccines' },
+            { src: 'demo/images/sleep.svg', alt: 'Sleep', caption: 'Healthy sleep' },
+            { src: 'demo/images/hydration.svg', alt: 'Hydration', caption: 'Drink water' }
         ];
         var chat = new DeraChat({
             dir: 'ltr',
@@ -322,8 +327,8 @@
                 if (/slider|slideshow/.test(t)) return { type: 'slider', text: 'Auto-playing slideshow', images: IMG };
                 if (/image|photo|tip/.test(t)) return { type: 'image', text: 'Tip of the day 🖼️', image: IMG[0] };
                 if (/file|download|attach|document/.test(t)) return { type: 'files', text: 'Here are your downloads 📎', files: [
-                    { name: 'getting-started.txt', url: 'assets/files/getting-started.txt', size: '0.6 KB', ext: 'txt' },
-                    { name: 'reply-templates.csv', url: 'assets/files/reply-templates.csv', size: '0.4 KB', ext: 'csv' }
+                    { name: 'getting-started.txt', url: 'demo/files/getting-started.txt', size: '0.6 KB', ext: 'txt' },
+                    { name: 'reply-templates.csv', url: 'demo/files/reply-templates.csv', size: '0.4 KB', ext: 'csv' }
                 ] };
                 return { type: 'text', text: 'You said: ' + text };
             }
@@ -364,11 +369,14 @@
             sw.appendChild(b);
         });
         document.querySelectorAll('[data-side]').forEach(function (b) { b.onclick = function () { chat.setLayout({ side: b.dataset.side }); }; });
-        document.querySelectorAll('[data-fab]').forEach(function (b) { b.onclick = function () { chat.update({ fab: { icon: b.dataset.fab } }); }; });
+        document.querySelectorAll('[data-dir]').forEach(function (b) { b.onclick = function () { chat.update({ dir: b.dataset.dir }); chat.open(); }; });
+        document.querySelectorAll('[data-fab]').forEach(function (b) { b.onclick = function () { chat.update({ fab: { icon: b.dataset.fab, image: '' } }); }; });
+        document.querySelectorAll('[data-fab-image]').forEach(function (b) { b.onclick = function () { chat.update({ fab: { image: b.dataset.fabImage } }); }; });
         document.querySelectorAll('[data-send]').forEach(function (b) { b.onclick = function () { chat.send(b.dataset.send); }; });
         document.getElementById('reset').onclick = function () {
             chat.setTheme({ primary: '#3b82f6', accent: '#2dd4bf', userBubble: ['#3b82f6', '#4f46e5'], radius: '22px' });
-            chat.setLayout({ side: 'right' }); chat.update({ fab: { icon: 'message', shape: 'round' } });
+            chat.setLayout({ side: 'right' });
+            chat.update({ dir: 'ltr', fab: { icon: 'message', shape: 'round', image: '' } });
         };
 
         // copy buttons

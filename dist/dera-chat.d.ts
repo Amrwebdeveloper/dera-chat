@@ -1,4 +1,5 @@
-// Type definitions for DeraChat 1.0.0
+// Type definitions for DeraChat 1.1.0
+// Project: https://github.com/Amrwebdeveloper/dera-chat
 
 export type TemplateType = 'text' | 'image' | 'embed' | 'carousel' | 'slider' | 'gallery' | string;
 
@@ -27,7 +28,7 @@ export interface DeraOptions {
     font?: string; fontUrl?: string;
   };
   layout?: { side?: 'left' | 'right'; edge?: string; width?: string; height?: string; fabSize?: string; fabBottom?: string };
-  fab?: { icon?: 'message' | 'chat' | 'bot' | 'help' | 'sparkles' | 'headset'; shape?: 'round' | 'rounded' | 'square' };
+  fab?: { icon?: 'message' | 'chat' | 'bot' | 'help' | 'sparkles' | 'headset'; shape?: 'round' | 'rounded' | 'square'; image?: string };
   send?: { icon?: 'send' | 'sendHorizontal' | 'arrow' | 'chevron'; shape?: 'round' | 'rounded' | 'square'; rotate?: boolean };
   identity?: { name?: string; status?: string; avatar?: string };
   features?: Partial<Record<'cta' | 'attachButton' | 'fullscreenButton' | 'suggestions' | 'newConversation' | 'history' | 'mapOpenButton', boolean>>;
@@ -44,10 +45,14 @@ export interface DeraOptions {
   onMessage?: (text: string, ctx: DeraContext) => DeraResponse | Promise<DeraResponse>;
   responder?: (text: string, ctx: DeraContext) => DeraResponse | Promise<DeraResponse>;
   responses?: Record<string, DeraResponse>;
+  endpoint?: string;
 }
+
+export interface DeraMessage { role: 'user' | 'assistant'; content: string; }
 
 export interface DeraContext {
   instance: DeraChat;
+  history: DeraMessage[];
   reply(response: DeraResponse): DeraChat;
   typing(): HTMLElement;
 }
@@ -73,6 +78,7 @@ export default class DeraChat {
   readonly isOpen: boolean;
   readonly isFullscreen: boolean;
   readonly unreadCount: number;
+  readonly history: DeraMessage[];
   options: DeraOptions;
 
   mount(target?: string | HTMLElement): this;

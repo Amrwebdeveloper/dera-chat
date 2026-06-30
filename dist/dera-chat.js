@@ -1,12 +1,13 @@
-/* =====================================================================
-   DeraChat — a self-contained, themeable chat widget in a single file.
-   - Named class: `new DeraChat({ ... })`
-   - Shadow DOM (full style isolation, multiple instances per page)
-   - Options object + event listeners (.on / .once / .off)
-   - RTL / LTR, accessible, XSS-safe (textContent), no CDN
-
-   UMD: exposes `window.DeraChat` and supports CommonJS / AMD.
-   ===================================================================== */
+/*!
+ * DeraChat v1.1.0
+ * A self-contained, themeable chat widget in a single file.
+ * Shadow DOM isolation · options + events · 7 reply templates · RTL/LTR.
+ *
+ * @license MIT
+ * @see https://github.com/Amrwebdeveloper/dera-chat
+ *
+ * UMD build: exposes `window.DeraChat`, with CommonJS and AMD support.
+ */
 (function (global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') module.exports = factory();
     else if (typeof define === 'function' && define.amd) define(factory);
@@ -14,7 +15,7 @@
 }(typeof window !== 'undefined' ? window : this, function () {
     'use strict';
 
-    var VERSION = '1.0.0';
+    var VERSION = '1.1.0';
 
     /* ===================================================================
        Styles (injected into each instance's shadow root)
@@ -65,6 +66,7 @@
         ".fab:hover .fab__icon--open{transform:rotate(-12deg);} .fab:hover .fab__icon--close{transform:translateY(.25rem);} .fab__icon{transition:transform .3s;}",
         ".fab__badge{position:absolute;top:-.25rem;right:-.25rem;width:1.5rem;height:1.5rem;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;background:var(--dc-red-500);border:2px solid #fff;border-radius:9999px;box-shadow:var(--dc-shadow-md);transform:scale(0);transition:transform .3s;}",
         ".fab__badge.is-visible{transform:scale(1);}",
+        ".fab__img{width:100%;height:100%;object-fit:cover;border-radius:inherit;}",
 
         /* widget */
         ".widget{position:fixed;bottom:calc(var(--dc-fab-bottom) + var(--dc-fab) + 1.5rem);width:90vw;max-width:var(--dc-width);height:var(--dc-height);z-index:2147483641;display:flex;flex-direction:column;overflow:hidden;background:rgba(255,255,255,.45);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.6);border-radius:var(--dc-radius);box-shadow:0 12px 40px 0 rgba(31,38,135,.12);transform:scale(0);opacity:0;pointer-events:none;font-family:var(--dc-font);transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s,width .4s,height .4s,bottom .4s,left .4s,right .4s;}",
@@ -275,7 +277,7 @@
             font: null, fontUrl: null
         },
         layout: { side: 'left', edge: '1.5rem', width: '380px', height: '70vh', fabSize: '4rem', fabBottom: '1.5rem' },
-        fab: { icon: 'message', shape: 'round' },
+        fab: { icon: 'message', shape: 'round', image: '' },
         send: { icon: 'send', shape: 'round', rotate: true },
         identity: { name: 'Assistant', status: 'Online', avatar: '' },
         features: { cta: true, attachButton: true, fullscreenButton: true, suggestions: true, newConversation: true, history: true, mapOpenButton: true },
@@ -298,9 +300,10 @@
             enlarge: 'Tap to enlarge', historyEmpty: 'No previous conversations'
         },
         history: [],              // seed history entries (UI only): {name, preview, time}
-        onMessage: null,          // async (text, ctx) => response | falls back to responses/demo
-        responses: null,          // { "kw1|kw2": template, "*": fallback }
-        responder: null           // alias for onMessage (function)
+        onMessage: null,          // async (text, ctx) => response  — wire your AI/API here
+        responder: null,          // alias for onMessage
+        responses: null,          // { "kw1|kw2": template, "*": fallback }  — static bot
+        endpoint: null            // POST {message, history} -> returns a response template (e.g. an AI backend)
     };
 
     /* ===================================================================
@@ -497,6 +500,7 @@
         this._handlers = {};
         this._customTemplates = {};
         this._state = { open: false, fullscreen: false, unread: 0, greeted: false };
+        this._history = [];       // conversation log: { role: 'user'|'assistant', content }
         this._mounted = false;
         this.els = {};
         if (options && options.mount === false) return;
@@ -573,7 +577,8 @@
         ]);
 
         /* FAB */
-        E.iconOpen = svgEl(ICONS[FAB_ICON[this.options.fab.icon] || 'message'], 'icon icon-xl fab__icon fab__icon--open');
+        // Open icon lives in a slot so it can hold either an inline SVG or an <img>
+        E.iconOpen = h('span', { 'class': 'fab__icon fab__icon--open' }, [svgEl(ICONS[FAB_ICON[this.options.fab.icon] || 'message'], 'icon icon-xl')]);
         E.iconClose = svgEl(ICONS.chevronDown, 'icon icon-xl fab__icon fab__icon--close is-hidden');
         E.badge = h('span', { 'class': 'fab__badge', 'aria-live': 'polite', text: '0' });
         E.fab = h('button', { type: 'button', 'class': 'fab', 'aria-label': 'Open or close chat', onclick: function () { self.toggle(); } }, [E.iconOpen, E.iconClose, E.badge]);
@@ -672,7 +677,12 @@
         this._setVar('--dc-fab-radius', SHAPE[this.options.fab.shape] || SHAPE.round);
         this._setVar('--dc-send-radius', SHAPE[this.options.send.shape] || SHAPE.round);
         this._setVar('--dc-send-rotate', this.options.send.rotate === false ? '0deg' : '-90deg');
-        if (this.els.iconOpen) this.els.iconOpen.innerHTML = ICONS[FAB_ICON[this.options.fab.icon] || 'message'];
+        if (this.els.iconOpen) {
+            var fabImg = safeUrl(this.options.fab.image || '', true);
+            this.els.iconOpen.replaceChildren(fabImg
+                ? h('img', { 'class': 'fab__img', src: fabImg, alt: '' })
+                : svgEl(ICONS[FAB_ICON[this.options.fab.icon] || 'message'], 'icon icon-xl'));
+        }
         if (this.els.sendIcon) this.els.sendIcon.innerHTML = ICONS[SEND_ICON[this.options.send.icon] || 'send'];
         this.emit('themechange', { theme: this.options.theme });
         return this;
@@ -751,6 +761,7 @@
     Object.defineProperty(DeraChat.prototype, 'isOpen', { get: function () { return this._state.open; } });
     Object.defineProperty(DeraChat.prototype, 'isFullscreen', { get: function () { return this._state.fullscreen; } });
     Object.defineProperty(DeraChat.prototype, 'unreadCount', { get: function () { return this._state.unread; } });
+    Object.defineProperty(DeraChat.prototype, 'history', { get: function () { return this._history.slice(); } });
 
     DeraChat.prototype.open = function () {
         if (this._state.open) return this;
@@ -969,7 +980,22 @@
     /* ---- Responder ---- */
     DeraChat.prototype._responder = function () {
         var o = this.options;
-        return o.onMessage || o.responder || (o.responses ? this._mapResponder(o.responses) : null);
+        if (o.onMessage) return o.onMessage;
+        if (o.responder) return o.responder;
+        if (o.responses) return this._mapResponder(o.responses);
+        if (o.endpoint) return this._endpointResponder(o.endpoint);
+        return null;
+    };
+    // Default backend bridge: POST { message, history } and expect a response template back.
+    DeraChat.prototype._endpointResponder = function (url) {
+        var self = this;
+        return function (text) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, history: self._history })
+            }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+        };
     };
     DeraChat.prototype._mapResponder = function (map) {
         var keys = Object.keys(map);
@@ -996,6 +1022,7 @@
         // remove suggestion chips
         var chips = this.els.messages.querySelectorAll('.row--chips'); Array.prototype.forEach.call(chips, function (c) { c.remove(); });
         this._renderUser(text);
+        this._history.push({ role: 'user', content: text });
         this.emit('message', { text: text });
         this._respond(text);
         return this;
@@ -1010,6 +1037,7 @@
                 .then(function () { return fn ? fn(text, self._ctx()) : self._demo(text); })
                 .then(function (response) {
                     self._hideTyping(typingRow);
+                    self._history.push({ role: 'assistant', content: (response && response.text) || '' });
                     if (self._state.open === false) { self._state.unread++; self._updateBadge(); }
                     if (!self.emit('beforereply', { response: response })) return;
                     return self._renderResponse(response).then(function () { self.emit('reply', { response: response }); });
@@ -1023,7 +1051,12 @@
     };
     DeraChat.prototype._ctx = function () {
         var self = this;
-        return { instance: self, reply: function (r) { return self.reply(r); }, typing: function () { return self._showTyping(); } };
+        return {
+            instance: self,
+            history: self._history.slice(),
+            reply: function (r) { return self.reply(r); },
+            typing: function () { return self._showTyping(); }
+        };
     };
     DeraChat.prototype._demo = function (text) {
         return { type: 'text', text: 'Thanks for your message! (demo reply)' };
@@ -1060,13 +1093,13 @@
     /* ---- Clear / new conversation / history (basic; phase 4 enriches) ---- */
     DeraChat.prototype.clear = function () {
         this.els.messages.replaceChildren(); this._setMenu(false);
-        this._state.greeted = true; this._greet();
+        this._history = []; this._state.greeted = true; this._greet();
         this.emit('clear'); return this;
     };
     DeraChat.prototype.newConversation = function () {
         this._archive();
         this.els.messages.replaceChildren(); this._setMenu(false); this._closeHistory();
-        this._state.greeted = true; this._greet();
+        this._history = []; this._state.greeted = true; this._greet();
         this.emit('newconversation'); return this;
     };
     DeraChat.prototype._archive = function () {
