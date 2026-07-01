@@ -4,13 +4,13 @@
 
 **A self-contained, themeable chat widget in a single file.**
 
-Named class · Shadow DOM isolation · options + events · 7 reply templates · RTL/LTR · zero dependencies.
+Named class · Shadow DOM isolation · Markdown · options + events · 8 reply templates · RTL/LTR · zero dependencies.
 
 [![version](https://img.shields.io/github/v/tag/Amrwebdeveloper/dera-chat?label=version&sort=semver)](https://github.com/Amrwebdeveloper/dera-chat/tags)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![jsDelivr](https://img.shields.io/badge/CDN-jsDelivr-e84d3d.svg)](https://www.jsdelivr.com/package/gh/Amrwebdeveloper/dera-chat)
 [![dependencies](https://img.shields.io/badge/dependencies-0-success.svg)](#)
-[![minified](https://img.shields.io/badge/minified-~61KB-informational.svg)](dist/dera-chat.min.js)
+[![minified](https://img.shields.io/badge/minified-~71KB-informational.svg)](dist/dera-chat.min.js)
 
 [**Live demo →**](https://amrwebdeveloper.github.io/dera-chat/)
 
@@ -38,7 +38,8 @@ Named class · Shadow DOM isolation · options + events · 7 reply templates · 
 - **One file.** Drop in `dera-chat.min.js` — CSS, icons and markup are inlined. No build step, no CSS to include.
 - **Fully isolated.** Each widget lives in its own Shadow DOM, so the host page can't break it and it can't leak out.
 - **Event-driven.** A small `.on()/.once()/.off()` API with cancelable hooks (`beforesend`, `beforereply`).
-- **7 reply templates.** text, image, embed (maps), carousel, slider, gallery, and downloadable files.
+- **Markdown built in.** Bot text renders **bold**, *italic*, `code`, code blocks, lists, quotes and links — safely, no dependency.
+- **8 reply templates.** text, image, embed/iframe (maps & any site), carousel, slider, gallery, downloadable files, and interactive forms.
 - **Any backend.** Plug an async `onMessage`, a JSON `responses` map, or a remote endpoint.
 - **Accessible & safe.** Live-region announcements, focus trapping, reduced-motion support; all text via `textContent`.
 - **RTL & LTR**, **multiple instances per page**, and **zero dependencies**.
@@ -46,7 +47,7 @@ Named class · Shadow DOM isolation · options + events · 7 reply templates · 
 ## Quick start
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.1.0/dist/dera-chat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.2.0/dist/dera-chat.min.js"></script>
 <script>
   const chat = new DeraChat({
     identity: { name: 'Acme Support', avatar: 'logo.png' },
@@ -97,7 +98,7 @@ A typing indicator is shown automatically while the promise is pending. Read the
 
 ```html
 <!-- pinned version (recommended) -->
-<script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.1.0/dist/dera-chat.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.2.0/dist/dera-chat.min.js"></script>
 
 <!-- latest on the main branch -->
 <script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@main/dist/dera-chat.min.js"></script>
@@ -112,25 +113,57 @@ Your `onMessage` (or `responses` map) returns one of these shapes; DeraChat rend
 
 | `type` | Renders | Key fields |
 |--------|---------|------------|
-| `text` | Plain text with a typewriter effect | `text` |
+| `text` | Markdown text with a typewriter effect | `text`, `markdown?` |
 | `image` | Image + caption (opens lightbox) | `image: { src, alt, caption }` |
-| `embed` | Sandboxed iframe (maps, video) | `embed: { src, title, caption, openUrl }` |
+| `embed` / `iframe` | Sandboxed iframe — maps, video, any https site | `embed: { src, title, caption, openUrl, ratio, height }` |
 | `carousel` | Side-by-side scrollable strip | `images: [{ src, alt, caption }]` |
 | `slider` | Auto-playing cross-fade | `images: [...]` |
 | `gallery` | Grid with a “+N” overflow tile | `images: [...]` |
 | `files` | Downloadable attachments | `files: [{ name, url, size, ext }]` |
+| `form` | Interactive form → `form:submit` event | `form: { fields, submitLabel, successText }` |
 
 ```js
-{ type: 'text',     text: 'Hello 👋' }
+{ type: 'text',     text: '**Bold**, *italic*, `code`, [links](…) and lists all render' }
 { type: 'image',    text: 'Tip',  image: { src: 'tip.png', alt: 'Tip', caption: 'Stay hydrated' } }
 { type: 'embed',    text: 'Find us', embed: { src: 'https://…/embed', caption: 'HQ', openUrl: 'https://…' } }
+{ type: 'iframe',   embed: { src: 'https://www.youtube-nocookie.com/embed/…', ratio: '16/9' } }
 { type: 'carousel', text: 'Gallery',  images: [ { src, alt, caption }, … ] }
 { type: 'slider',   text: 'Slideshow', images: [ … ] }
 { type: 'gallery',  text: 'Album',     images: [ … ] }
 { type: 'files',    text: 'Downloads', files: [ { name: 'guide.pdf', url: '/guide.pdf', size: '245 KB' } ] }
+{ type: 'form',     text: 'Contact us', form: {
+    submitLabel: 'Send',
+    fields: [
+      { name: 'email',   label: 'Email',   type: 'email', required: true },
+      { name: 'topic',   label: 'Topic',   type: 'select', options: ['Support', 'Sales'] },
+      { name: 'message', label: 'Message', type: 'textarea' },
+    ],
+} }
 ```
 
 Register custom templates with [`registerTemplate()`](#methods).
+
+### Markdown
+
+Bot text (the `text` template and the caption on any media template) renders a safe Markdown subset:
+`**bold**`, `*italic*`, `~~strike~~`, `` `code` ``, `# headings`, `- lists`, `1.` lists, `> quotes`,
+fenced ```` ``` ```` code blocks, `---` rules and `[links](url)`. It's rendered straight to DOM nodes
+(never `innerHTML`), so message content can't inject markup. Turn it off globally with
+`behavior: { markdown: false }`, or per message with `{ type: 'text', text: '…', markdown: false }`.
+
+### Forms
+
+The `form` template renders a real, accessible `<form>`. Fields support `text`, `email`, `tel`, `url`,
+`number`, `password`, `date`, `time`, `textarea`, `select`, `checkbox` and `radio`, with native `required`
+validation. On submit it fires a cancelable `form:submit` event carrying the collected `values`:
+
+```js
+chat.on('form:submit', (e) => {
+  console.log(e.id, e.values);            // { email: '…', topic: 'Support', message: '…' }
+  // e.cancel();  // to keep the form editable and suppress the success note
+  fetch('/api/contact', { method: 'POST', body: JSON.stringify(e.values) });
+});
+```
 
 ## Events
 
@@ -151,6 +184,7 @@ Subscribe with `.on(event, handler)` — chainable. Cancelable events expose `pa
 | `lightbox:open` / `:close` / `:change` | `{ index, images }` | image viewer |
 | `carousel:change` / `slider:change` | `{ index }` | slide changed |
 | `embed:open` | `{ url }` | “open map/link” clicked |
+| `form:submit` | `{ id, values, form, reset(), cancel() }` | form submitted; cancelable |
 | `suggestion:click` | `{ label, value }` | quick-reply chip |
 | `fullscreenchange` | `{ isFullscreen }` | — |
 | `unread` | `{ count }` | unread badge changed |
@@ -186,7 +220,7 @@ Read-only getters: `isOpen`, `isFullscreen`, `unreadCount`, `options`.
 | `send` | `icon` (`send`/`sendHorizontal`/`arrow`/`chevron`), `shape`, `rotate` |
 | `identity` | `name`, `status`, `avatar` |
 | `features` | `cta`, `attachButton`, `fullscreenButton`, `suggestions`, `newConversation`, `history`, `mapOpenButton` (booleans) |
-| `behavior` | `welcome`, `placeholder`, `typeSpeed`, `botReplyDelay`, `suggestions`, `carousel`, `slider`, `gallery` |
+| `behavior` | `welcome`, `placeholder`, `markdown` (bool), `typeSpeed`, `botReplyDelay`, `suggestions`, `carousel`, `slider`, `gallery` |
 | `strings` | UI string overrides (i18n) |
 | `responder` | `onMessage(text, ctx)` · `responses` map · `endpoint` |
 | top-level | `el`, `dir` (`rtl`/`ltr`), `open` |

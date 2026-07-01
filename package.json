@@ -1,7 +1,7 @@
 {
   "name": "dera-chat",
-  "version": "1.1.0",
-  "description": "A self-contained, themeable chat widget in a single file — Shadow DOM, options + events, 7 reply templates, RTL/LTR, zero dependencies.",
+  "version": "1.2.0",
+  "description": "A self-contained, themeable chat widget in a single file — Shadow DOM, Markdown, options + events, 8 reply templates, forms, iframes, RTL/LTR, zero dependencies.",
   "main": "dist/dera-chat.js",
   "module": "dist/dera-chat.js",
   "unpkg": "dist/dera-chat.min.js",
@@ -24,6 +24,8 @@
     "web-component",
     "vanilla-js",
     "zero-dependency",
+    "markdown",
+    "forms",
     "rtl",
     "embeddable"
   ],

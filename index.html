@@ -145,7 +145,7 @@
             <p class="lead">Include the bundle, then create an instance with your options.</p>
             <div class="code" data-code>
 <pre><code>&lt;!-- via jsDelivr CDN (pinned to a version) --&gt;
-&lt;script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.1.0/dist/dera-chat.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/Amrwebdeveloper/dera-chat@v1.2.0/dist/dera-chat.min.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   const chat = new DeraChat({
     identity: { name: 'Acme Support', avatar: 'logo.png' },
@@ -187,7 +187,10 @@
                     <div class="row"><button class="chip" data-fab-image="demo/images/heart.svg">use image</button><button class="chip" data-fab-image="">icon</button></div>
                     <span class="lbl">Try a reply</span>
                     <div class="row">
+                        <button class="chip" data-send="show markdown">markdown</button>
                         <button class="chip" data-send="show me the map">map</button>
+                        <button class="chip" data-send="embed a youtube video">iframe</button>
+                        <button class="chip" data-send="show a form">form</button>
                         <button class="chip" data-send="show a carousel">carousel</button>
                         <button class="chip" data-send="show the gallery">gallery</button>
                         <button class="chip" data-send="show a slider">slider</button>
@@ -264,11 +267,13 @@
             <h2>Reply templates</h2>
             <p class="lead">Your <code>onMessage</code> returns one of these shapes; DeraChat renders it.</p>
             <div class="code" data-code>
-<pre><code>{ type: 'text', text: 'Hello 👋' }
+<pre><code>{ type: 'text', text: '**Markdown** is supported: *italic*, `code`, [links](…), lists…' }
 
 { type: 'image', text: 'Tip', image: { src: 'tip.png', alt: 'Tip', caption: 'Stay hydrated' } }
 
-{ type: 'embed', text: 'Find us', embed: { src: 'https://…/embed', caption: 'HQ', openUrl: 'https://…' } }
+{ type: 'embed',  text: 'Find us', embed: { src: 'https://…/embed', caption: 'HQ', openUrl: 'https://…' } }
+
+{ type: 'iframe', embed: { src: 'https://…', ratio: '16/9' } }   // any https iframe, sandboxed
 
 { type: 'carousel', text: 'Gallery', images: [ { src, alt, caption }, … ] }
 
@@ -276,7 +281,12 @@
 
 { type: 'gallery',  text: 'Album', images: [ …many… ] }   // shows N tiles + “+N”
 
-{ type: 'files', text: 'Downloads', files: [ { name:'guide.pdf', url:'/guide.pdf', size:'245 KB' }, … ] }</code></pre>
+{ type: 'files', text: 'Downloads', files: [ { name:'guide.pdf', url:'/guide.pdf', size:'245 KB' }, … ] }
+
+{ type: 'form', text: 'Contact us', form: { fields: [
+  { name:'email', label:'Email', type:'email', required:true },
+  { name:'msg',   label:'Message', type:'textarea' }
+], submitLabel: 'Send' } }   // → fires the `form:submit` event with { values }</code></pre>
                 <button class="copy" type="button">Copy</button>
             </div>
         </div>
@@ -321,6 +331,27 @@
             },
             onMessage: function (text) {
                 var t = (text || '').toLowerCase();
+                if (/markdown|format|md\b/.test(t)) return { type: 'text', text: [
+                    '### Markdown is supported',
+                    'You can use **bold**, *italic*, ~~strike~~ and `inline code`.',
+                    '',
+                    '- Bullet lists',
+                    '- With [links](https://github.com/Amrwebdeveloper/dera-chat)',
+                    '',
+                    '> Blockquotes and fenced code too:',
+                    '',
+                    '```',
+                    'new DeraChat({ behavior: { markdown: true } });',
+                    '```'
+                ].join('\n') };
+                if (/youtube|video|iframe/.test(t)) return { type: 'iframe', text: 'Any **https** iframe works — sandboxed for safety:', iframe: { src: 'https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ', title: 'Video', ratio: '16/9' } };
+                if (/\bform\b|contact|sign ?up|survey/.test(t)) return { type: 'form', text: 'Quick **contact form** — try submitting:', form: { id: 'contact', submitLabel: 'Send message', successText: 'Thanks! We\'ll be in touch. ✅', fields: [
+                    { name: 'name', label: 'Name', type: 'text', placeholder: 'Jane Doe', required: true },
+                    { name: 'email', label: 'Email', type: 'email', placeholder: 'jane@acme.com', required: true },
+                    { name: 'topic', label: 'Topic', type: 'select', placeholder: 'Choose one…', options: [ { label: 'Support', value: 'support' }, { label: 'Sales', value: 'sales' }, { label: 'Feedback', value: 'feedback' } ] },
+                    { name: 'message', label: 'Message', type: 'textarea', rows: 3, placeholder: 'How can we help?' },
+                    { name: 'newsletter', label: 'Subscribe to the newsletter', type: 'checkbox', checked: true }
+                ] } };
                 if (/map|location|where/.test(t)) return { type: 'embed', text: 'Here we are 📍', embed: { src: 'https://www.openstreetmap.org/export/embed.html?bbox=31.198%2C30.016%2C31.226%2C30.037&layer=mapnik&marker=30.0264%2C31.2122', caption: 'Our office', openUrl: 'https://www.openstreetmap.org/?mlat=30.0264&mlon=31.2122#map=15/30.0264/31.2122' } };
                 if (/carousel/.test(t)) return { type: 'carousel', text: 'Swipe or drag 👈👉', images: IMG };
                 if (/gallery|album/.test(t)) return { type: 'gallery', text: 'Tap any tile', images: IMG.concat(IMG.slice(0, 2)) };
@@ -337,7 +368,7 @@
 
         // ----- Event log -----
         var logEl = document.getElementById('evtlog');
-        var COLORS = { ready: '#64748b', open: '#16a34a', close: '#dc2626', message: '#2563eb', reply: '#0891b2', 'typing:start': '#7c3aed', 'image:click': '#db2777', 'lightbox:open': '#9333ea', 'carousel:change': '#0d9488', 'slider:change': '#0d9488', fullscreenchange: '#ca8a04' };
+        var COLORS = { ready: '#64748b', open: '#16a34a', close: '#dc2626', message: '#2563eb', reply: '#0891b2', 'typing:start': '#7c3aed', 'image:click': '#db2777', 'lightbox:open': '#9333ea', 'carousel:change': '#0d9488', 'slider:change': '#0d9488', 'form:submit': '#c026d3', fullscreenchange: '#ca8a04' };
         function logEvent(type, text) {
             var r = document.createElement('div'); r.className = 'evt';
             var tag = document.createElement('span'); tag.className = 'tag'; tag.style.background = COLORS[type] || '#475569'; tag.textContent = type;
@@ -355,6 +386,7 @@
             .on('lightbox:open', function (e) { logEvent('lightbox:open', 'index ' + e.index); })
             .on('carousel:change', function (e) { logEvent('carousel:change', 'index ' + e.index); })
             .on('slider:change', function (e) { logEvent('slider:change', 'index ' + e.index); })
+            .on('form:submit', function (e) { logEvent('form:submit', (e.id || 'form') + ': ' + JSON.stringify(e.values)); })
             .on('fullscreenchange', function (e) { logEvent('fullscreenchange', e.isFullscreen ? 'on' : 'off'); });
 
         // ----- Page controls -----

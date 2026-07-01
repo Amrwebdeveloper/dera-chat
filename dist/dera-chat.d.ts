@@ -1,17 +1,62 @@
-// Type definitions for DeraChat 1.1.0
+// Type definitions for DeraChat 1.2.0
 // Project: https://github.com/Amrwebdeveloper/dera-chat
 
-export type TemplateType = 'text' | 'image' | 'embed' | 'carousel' | 'slider' | 'gallery' | string;
+export type TemplateType = 'text' | 'image' | 'embed' | 'iframe' | 'carousel' | 'slider' | 'gallery' | 'files' | 'form' | string;
 
 export interface DeraImage { src: string; alt?: string; caption?: string; }
+
+export interface DeraEmbed {
+  src: string;
+  title?: string;
+  caption?: string;
+  openUrl?: string;
+  /** CSS aspect-ratio, e.g. '16/9' | '4/3' | '1/1'. */
+  ratio?: string;
+  /** Fixed height, e.g. '420px' | 420. Overrides ratio. */
+  height?: string | number;
+  /** iframe `allow` attribute (validated). */
+  allow?: string;
+  /** iframe `sandbox` attribute (validated). Defaults to a safe, cross-origin-only set. */
+  sandbox?: string;
+}
+
+export type DeraFieldType =
+  | 'text' | 'email' | 'tel' | 'url' | 'number' | 'password' | 'date' | 'time' | 'search' | 'color'
+  | 'textarea' | 'select' | 'checkbox' | 'radio';
+
+export interface DeraFormField {
+  name: string;
+  type?: DeraFieldType;
+  label?: string;
+  placeholder?: string;
+  required?: boolean;
+  value?: string | number | boolean;
+  checked?: boolean;
+  rows?: number;
+  min?: string | number;
+  max?: string | number;
+  pattern?: string;
+  options?: Array<string | { label: string; value: string }>;
+}
+
+export interface DeraForm {
+  id?: string;
+  fields: DeraFormField[];
+  submitLabel?: string;
+  successText?: string;
+}
 
 export interface DeraResponse {
   type: TemplateType;
   text?: string;
+  /** Override the global Markdown setting for this message. */
+  markdown?: boolean;
   image?: DeraImage;
-  embed?: { src: string; title?: string; caption?: string; openUrl?: string; kind?: string };
+  embed?: DeraEmbed;
+  iframe?: DeraEmbed;
   images?: DeraImage[];
   files?: { name: string; url: string; size?: string; ext?: string }[];
+  form?: DeraForm;
   [key: string]: any;
 }
 
@@ -34,6 +79,8 @@ export interface DeraOptions {
   features?: Partial<Record<'cta' | 'attachButton' | 'fullscreenButton' | 'suggestions' | 'newConversation' | 'history' | 'mapOpenButton', boolean>>;
   behavior?: {
     cta?: string; welcome?: string; placeholder?: string;
+    /** Render Markdown in text/lead bubbles (default true). */
+    markdown?: boolean;
     typeSpeed?: number; botReplyDelay?: number;
     suggestions?: { label: string; value?: string }[];
     carousel?: { itemBasis?: string };
@@ -62,7 +109,7 @@ export type DeraEvent =
   | 'beforeopen' | 'open' | 'close' | 'fullscreenchange'
   | 'beforesend' | 'message' | 'beforereply' | 'reply'
   | 'typing:start' | 'typing:end' | 'messagerendered'
-  | 'clear' | 'newconversation' | 'attach' | 'suggestion:click'
+  | 'clear' | 'newconversation' | 'attach' | 'suggestion:click' | 'form:submit'
   | 'image:click' | 'file:download' | 'lightbox:open' | 'lightbox:close' | 'lightbox:change'
   | 'carousel:change' | 'slider:change' | 'embed:open'
   | 'menu:open' | 'menu:close' | 'history:open' | 'history:close' | 'history:select'

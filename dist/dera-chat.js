@@ -1,7 +1,7 @@
 /*!
- * DeraChat v1.1.0
+ * DeraChat v1.2.0
  * A self-contained, themeable chat widget in a single file.
- * Shadow DOM isolation · options + events · 7 reply templates · RTL/LTR.
+ * Shadow DOM isolation · options + events · Markdown · 8 reply templates · RTL/LTR.
  *
  * @license MIT
  * @see https://github.com/Amrwebdeveloper/dera-chat
@@ -15,7 +15,7 @@
 }(typeof window !== 'undefined' ? window : this, function () {
     'use strict';
 
-    var VERSION = '1.1.0';
+    var VERSION = '1.2.0';
 
     /* ===================================================================
        Styles (injected into each instance's shadow root)
@@ -175,6 +175,35 @@
         ".m-file__dl{flex-shrink:0;width:2.2rem;height:2.2rem;display:flex;align-items:center;justify-content:center;color:var(--dc-primary);background:var(--dc-blue-50);border-radius:9999px;transition:background-color .2s,transform .15s;}",
         ".m-file__dl:hover{background:var(--dc-primary);color:#fff;transform:translateY(-1px);}",
 
+        /* markdown */
+        ".bubble.md,.lead.md{white-space:normal;}",
+        ".md>*:first-child{margin-top:0;} .md>*:last-child{margin-bottom:0;}",
+        ".md-p{margin:0 0 .5rem;}",
+        ".md-h{margin:.2rem 0 .4rem;font-weight:700;line-height:1.3;}",
+        "h1.md-h{font-size:1.15rem;} h2.md-h{font-size:1.08rem;} h3.md-h{font-size:1rem;} h4.md-h,h5.md-h,h6.md-h{font-size:.92rem;}",
+        ".md-a{color:var(--dc-primary);text-decoration:underline;text-underline-offset:2px;font-weight:600;overflow-wrap:anywhere;}",
+        ".md code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82em;background:var(--dc-gray-100);padding:.1em .35em;border-radius:.35rem;}",
+        ".md-pre{margin:.45rem 0;padding:.7rem .85rem;background:var(--dc-gray-800);border-radius:.6rem;overflow-x:auto;}",
+        ".md-pre code{background:none;padding:0;color:#e5e7eb;font-size:.8rem;line-height:1.55;white-space:pre;}",
+        ".md-ul,.md-ol{margin:.35rem 0;padding-inline-start:1.35rem;} .md li{margin:.15rem 0;}",
+        ".md-quote{margin:.45rem 0;padding:.15rem .8rem;border-inline-start:3px solid var(--dc-primary);opacity:.9;}",
+        ".md-hr{border:none;border-top:1px solid var(--dc-gray-100);margin:.6rem 0;}",
+        ".md strong{font-weight:700;} .md em{font-style:italic;} .md del{opacity:.7;}",
+
+        /* form */
+        ".m-form{display:flex;flex-direction:column;gap:.7rem;}",
+        ".m-form__field{display:flex;flex-direction:column;gap:.25rem;}",
+        ".m-form__label{font-size:.8rem;font-weight:600;color:var(--dc-gray-700);}",
+        ".m-form__input{width:100%;padding:.55rem .7rem;font-family:inherit;font-size:.85rem;color:var(--dc-gray-800);background:rgba(255,255,255,.9);border:1px solid var(--dc-gray-100);border-radius:.55rem;outline:none;transition:border-color .2s,box-shadow .2s;}",
+        ".m-form__input:focus{border-color:var(--dc-primary);box-shadow:0 0 0 3px rgba(59,130,246,.15);}",
+        "textarea.m-form__input{resize:vertical;min-height:3rem;}",
+        ".m-form__checkrow,.m-form__radio{display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:var(--dc-gray-700);cursor:pointer;}",
+        ".m-form__radios{display:flex;flex-direction:column;gap:.35rem;}",
+        ".m-form__check,.m-form__radio input{width:1rem;height:1rem;accent-color:var(--dc-primary);cursor:pointer;}",
+        ".m-form__submit{align-self:flex-start;padding:.55rem 1.2rem;font-family:inherit;font-size:.85rem;font-weight:700;color:#fff;background:linear-gradient(to right,var(--dc-primary),var(--dc-user-to));border-radius:9999px;box-shadow:var(--dc-shadow-md);transition:transform .15s,box-shadow .2s;}",
+        ".m-form__submit:hover{transform:translateY(-1px);box-shadow:var(--dc-shadow-lg);} .m-form__submit:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none;}",
+        ".m-form__status{font-size:.82rem;font-weight:600;color:var(--dc-green-600);} .m-form__status.is-ok::before{content:'\\2713  ';}",
+
         /* rtl mirror */
         ":host([dir='rtl']) .carousel__icon,:host([dir='rtl']) .slider__icon,:host([dir='rtl']) .history__icon,:host([dir='rtl']) .lightbox__nav .icon{transform:scaleX(-1);}",
 
@@ -285,6 +314,7 @@
             cta: 'Hi! Have a question? We are here to help!',
             welcome: 'Hello! How can I help you today?',
             placeholder: 'Type your message…',
+            markdown: true,           // render Markdown in text/lead bubbles (safe, DOM-based)
             typeSpeed: 22, botReplyDelay: 600,
             suggestions: [],
             carousel: { itemBasis: '88%' },
@@ -297,7 +327,8 @@
             close: 'Close chat', back: 'Back', newShort: '+ New', attach: 'Attach file',
             send: 'Send', closeCta: 'Close', openMap: 'Open map in a new tab',
             zoomIn: 'Zoom in', zoomOut: 'Zoom out', resetZoom: 'Reset', prev: 'Previous', next: 'Next',
-            enlarge: 'Tap to enlarge', historyEmpty: 'No previous conversations'
+            enlarge: 'Tap to enlarge', historyEmpty: 'No previous conversations',
+            formSubmit: 'Submit', formSuccess: 'Submitted successfully.'
         },
         history: [],              // seed history entries (UI only): {name, preview, time}
         onMessage: null,          // async (text, ctx) => response  — wire your AI/API here
@@ -319,12 +350,19 @@
         return out;
     }
     function reducedMotion() { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+    function stripCtrl(str) {
+        var out = '';
+        for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); if (c > 31 && c !== 127) out += str.charAt(i); }
+        return out;
+    }
     function safeUrl(u, allowData) {
         if (typeof u !== 'string') return '';
-        var s = u.trim();
+        // Strip control chars first (the URL parser would too), so a prefixed control byte cannot hide a javascript: scheme.
+        var s = stripCtrl(u.trim());
+        if (/^[\/\\]{2}/.test(s)) return '';                        // block protocol-relative (//host, \\host)
         if (/^(https:\/\/|\/|\.\/|\.\.\/|assets\/)/i.test(s)) return s;
         if (allowData && /^data:image\//i.test(s)) return s;
-        if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+        if (!/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;              // no scheme -> relative path, safe
         return '';
     }
     function svgEl(pathHtml, cls) {
@@ -349,6 +387,91 @@
         var b = h('button', { type: 'button', 'class': cls, 'aria-label': label, title: label, onclick: onClick });
         b.appendChild(svgEl(ICONS[iconKey], 'icon icon-md'));
         return b;
+    }
+
+    /* ===================================================================
+       Markdown — a small, safe subset rendered straight to DOM nodes.
+       Everything goes through textContent / createTextNode, so no markup
+       in the source can ever become live HTML (XSS-safe by construction).
+       Supports: **bold**, *italic*, `code`, ~~strike~~, [links](url),
+       headings, blockquotes, ordered/unordered lists, fenced code, ---.
+       =================================================================== */
+    // Sticky + length-bounded so pathological input (many unmatched '[' or '*') stays linear, never O(n^2)/ReDoS.
+    var RE_LINK = /\[([^\]]{0,400})\]\(([^)\s]{1,2048})(?:\s+"[^"]{0,200}")?\)/y;
+    var RE_EM_STAR = /\*(\S(?:[^*]{0,2000}?\S)?)\*/y;
+    var RE_EM_US = /_(\S(?:[^_]{0,2000}?\S)?)_/y;
+    function mdInline(parent, text) {
+        var i = 0, n = text.length, buf = '';
+        function flush() { if (buf) { parent.appendChild(document.createTextNode(buf)); buf = ''; } }
+        while (i < n) {
+            var c = text.charAt(i), prev = i > 0 ? text.charAt(i - 1) : '';
+            if (c === '\n') { flush(); parent.appendChild(h('br')); i++; continue; }
+            if (c === '`') {                                   // inline code
+                var end = text.indexOf('`', i + 1);
+                if (end > i) { flush(); parent.appendChild(h('code', { text: text.slice(i + 1, end) })); i = end + 1; continue; }
+            }
+            if (c === '[') {                                   // [label](url)
+                RE_LINK.lastIndex = i; var lk = RE_LINK.exec(text);
+                if (lk && lk.index === i) { flush(); var href = safeUrl(lk[2], false); var a = h('a', { 'class': 'md-a', href: href || '#', target: '_blank', rel: 'noopener noreferrer' }); mdInline(a, lk[1]); parent.appendChild(a); i += lk[0].length; continue; }
+            }
+            var dbl = c + text.charAt(i + 1);
+            if ((dbl === '**' || dbl === '__') && !(dbl === '__' && /\w/.test(prev))) {   // bold
+                var be = text.indexOf(dbl, i + 2);
+                if (be > i + 1) { flush(); var st = h('strong'); mdInline(st, text.slice(i + 2, be)); parent.appendChild(st); i = be + 2; continue; }
+            }
+            if (dbl === '~~') {                                // strikethrough
+                var se = text.indexOf('~~', i + 2);
+                if (se > i + 1) { flush(); var del = h('del'); mdInline(del, text.slice(i + 2, se)); parent.appendChild(del); i = se + 2; continue; }
+            }
+            if ((c === '*' || c === '_') && !/\w/.test(prev)) {                           // italic (skip intraword * and _)
+                var re = c === '*' ? RE_EM_STAR : RE_EM_US; re.lastIndex = i; var em = re.exec(text);
+                if (em && em.index === i) { flush(); var it = h('em'); mdInline(it, em[1]); parent.appendChild(it); i += em[0].length; continue; }
+            }
+            buf += c; i++;
+        }
+        flush();
+    }
+    function renderMarkdown(text, depth) {
+        depth = depth || 0;
+        var frag = document.createDocumentFragment();
+        var lines = String(text == null ? '' : text).replace(/\r\n?/g, '\n').split('\n'), i = 0;
+        var SPECIAL = /^\s*(?:#{1,6}\s|>|[-*+]\s|\d+\.\s|```)/, RULE = /^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/;
+        while (i < lines.length) {
+            var line = lines[i];
+            if (/^\s*$/.test(line)) { i++; continue; }
+            if (/^\s*```/.test(line)) {                        // fenced code block
+                var code = []; i++;
+                while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) { code.push(lines[i]); i++; }
+                if (i < lines.length) i++;                     // skip the closing fence (if present)
+                var pre = h('pre', { 'class': 'md-pre' }); pre.appendChild(h('code', { text: code.join('\n') }));
+                frag.appendChild(pre); continue;
+            }
+            var hd = /^(#{1,6})\s+(.*)$/.exec(line);
+            if (hd) { var el = h('h' + hd[1].length, { 'class': 'md-h' }); mdInline(el, hd[2].trim()); frag.appendChild(el); i++; continue; }
+            if (RULE.test(line)) { frag.appendChild(h('hr', { 'class': 'md-hr' })); i++; continue; }
+            if (/^\s*>/.test(line)) {                          // blockquote
+                var q = [];
+                while (i < lines.length && /^\s*>/.test(lines[i])) { q.push(lines[i].replace(/^\s*>\s?/, '')); i++; }
+                var bq = h('blockquote', { 'class': 'md-quote' });
+                if (depth < 24) bq.appendChild(renderMarkdown(q.join('\n'), depth + 1));   // bound nesting to avoid stack overflow
+                else { var qp = h('p', { 'class': 'md-p' }); mdInline(qp, q.join('\n')); bq.appendChild(qp); }
+                frag.appendChild(bq); continue;
+            }
+            if (/^\s*[-*+]\s+/.test(line)) {                   // unordered list
+                var ul = h('ul', { 'class': 'md-ul' });
+                while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) { var li = h('li'); mdInline(li, lines[i].replace(/^\s*[-*+]\s+/, '')); ul.appendChild(li); i++; }
+                frag.appendChild(ul); continue;
+            }
+            if (/^\s*\d+\.\s+/.test(line)) {                   // ordered list
+                var ol = h('ol', { 'class': 'md-ol' });
+                while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { var li2 = h('li'); mdInline(li2, lines[i].replace(/^\s*\d+\.\s+/, '')); ol.appendChild(li2); i++; }
+                frag.appendChild(ol); continue;
+            }
+            var para = [];                                     // paragraph
+            while (i < lines.length && !/^\s*$/.test(lines[i]) && !SPECIAL.test(lines[i]) && !RULE.test(lines[i])) { para.push(lines[i]); i++; }
+            var p = h('p', { 'class': 'md-p' }); mdInline(p, para.join('\n')); frag.appendChild(p);
+        }
+        return frag;
     }
 
     /* ===================================================================
@@ -843,11 +966,12 @@
     DeraChat.prototype._renderTemplate = function (res) {
         switch (res.type) {
             case 'image': return this._renderImage(res);
-            case 'embed': return this._renderEmbed(res);
+            case 'embed': case 'iframe': return this._renderEmbed(res);
             case 'carousel': return this._renderCarousel(res);
             case 'slider': return this._renderSlider(res);
             case 'gallery': return this._renderGallery(res);
             case 'files': case 'file': return this._renderFiles(res);
+            case 'form': return this._renderForm(res);
             case 'text':
             default: return this._renderText(res);
         }
@@ -856,7 +980,8 @@
         var n = res.images ? res.images.length : 0, pre = res.text ? res.text + '. ' : '';
         switch (res.type) {
             case 'image': return pre + ((res.image && (res.image.caption || res.image.alt)) || 'Image');
-            case 'embed': return pre + ((res.embed && (res.embed.caption || res.embed.title)) || 'Embedded content');
+            case 'embed': case 'iframe': return pre + (((res.embed || res.iframe) && ((res.embed || res.iframe).caption || (res.embed || res.iframe).title)) || 'Embedded content');
+            case 'form': return pre + 'A form to fill out';
             case 'carousel': return pre + 'Carousel with ' + n + ' images';
             case 'slider': return pre + 'Slideshow with ' + n + ' images';
             case 'gallery': return pre + 'Gallery with ' + n + ' images';
@@ -865,17 +990,48 @@
         }
     };
     DeraChat.prototype._lightbox = function () { if (!this._lb) this._lb = createLightbox(this); return this._lb; };
+    DeraChat.prototype._markdownOn = function (res) {
+        return (res && res.markdown != null) ? !!res.markdown : this.options.behavior.markdown !== false;
+    };
     DeraChat.prototype._mediaBubble = function (res) {
         var b = h('div', { 'class': 'bubble bubble--bot bubble--media' });
-        if (res.text) b.appendChild(h('p', { 'class': 'lead', text: res.text }));
+        if (res.text) {
+            var lead = h('div', { 'class': 'lead' });
+            if (this._markdownOn(res)) { lead.className = 'lead md'; lead.appendChild(renderMarkdown(res.text)); }
+            else lead.textContent = res.text;
+            b.appendChild(lead);
+        }
         return b;
+    };
+    // Reveal already-rendered nodes character-by-character, preserving formatting.
+    DeraChat.prototype._typeNodes = function (el, done) {
+        var self = this, speed = this.options.behavior.typeSpeed, nodes = [];
+        var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false), t;
+        while ((t = walker.nextNode())) nodes.push({ node: t, full: t.nodeValue });
+        if (reducedMotion() || speed <= 0 || !nodes.length) { if (done) done(); return; }
+        nodes.forEach(function (o) { o.node.nodeValue = ''; });
+        el.classList.add('typing-cursor');
+        var ni = 0, ci = 0, tick = 0;
+        (function step() {
+            while (ni < nodes.length && ci >= nodes[ni].full.length) { ni++; ci = 0; }
+            if (ni >= nodes.length) { el.classList.remove('typing-cursor'); if (done) done(); return; }
+            nodes[ni].node.nodeValue += nodes[ni].full.charAt(ci); ci++;
+            if ((tick++ % 8) === 0) self._scroll();
+            window.setTimeout(step, speed + Math.random() * 14);
+        })();
     };
     DeraChat.prototype._renderText = function (res) {
         var self = this, row = this._row('bot');
         var bubble = h('div', { 'class': 'bubble bubble--bot' });
         row.appendChild(bubble); this.els.messages.appendChild(row);
         return new Promise(function (resolve) {
-            self._typewriter(bubble, res.text || '', function () { self._scroll(); resolve(); });
+            if (self._markdownOn(res)) {
+                bubble.classList.add('md');
+                bubble.appendChild(renderMarkdown(res.text || ''));
+                self._typeNodes(bubble, function () { self._scroll(); resolve(); });
+            } else {
+                self._typewriter(bubble, res.text || '', function () { self._scroll(); resolve(); });
+            }
             self._scroll();
         });
     };
@@ -890,20 +1046,35 @@
         this.emit('messagerendered', { type: 'image', element: row });
         return Promise.resolve();
     };
+    // Any https iframe is allowed (maps, video, dashboards…). The frame is
+    // sandboxed without allow-same-origin, so it cannot reach the host page.
     DeraChat.prototype._safeEmbed = function (url) {
         if (typeof url !== 'string') return null;
-        try {
-            var p = new URL(url, location.href); if (p.protocol !== 'https:') return null;
-            var hosts = ['www.google.com', 'google.com', 'maps.google.com', 'www.openstreetmap.org', 'openstreetmap.org', 'www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com', 'player.vimeo.com'];
-            return hosts.indexOf(p.hostname) === -1 ? null : p.href;
-        } catch (e) { return null; }
+        try { var p = new URL(url, location.href); return p.protocol === 'https:' ? p.href : null; }
+        catch (e) { return null; }
     };
     DeraChat.prototype._renderEmbed = function (res) {
-        var self = this, emb = res.embed || {}, url = this._safeEmbed(emb.src), row = this._row('bot'), bubble = this._mediaBubble(res);
+        var self = this, emb = res.embed || res.iframe || {}, url = this._safeEmbed(emb.src), row = this._row('bot'), bubble = this._mediaBubble(res);
         if (!url) bubble.appendChild(h('p', { 'class': 'lead', text: 'Embedded content could not be displayed (untrusted source).' }));
         else {
-            var iframe = h('iframe', { 'class': 'm-embed__frame', src: url, title: emb.title || 'Embedded content', loading: 'lazy', referrerpolicy: 'no-referrer-when-downgrade', allow: 'fullscreen; picture-in-picture', allowfullscreen: '', sandbox: 'allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox' });
-            bubble.appendChild(h('div', { 'class': 'm-embed' }, [iframe]));
+            var box = h('div', { 'class': 'm-embed' });
+            if (emb.ratio && /^[\d.]+\s*\/\s*[\d.]+$/.test(emb.ratio)) box.style.aspectRatio = emb.ratio;
+            if (emb.height && /^\d+(px|rem|vh)?$/.test(String(emb.height))) { box.style.aspectRatio = 'auto'; box.style.height = /\D$/.test(String(emb.height)) ? emb.height : emb.height + 'px'; }
+            // Never let a response widen the sandbox: allow-same-origin + allow-scripts on a same-origin src would escape it.
+            var sandbox = 'allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox';
+            if (typeof emb.sandbox === 'string' && /^[a-z\s-]+$/i.test(emb.sandbox)) {
+                var stoks = emb.sandbox.toLowerCase().split(/\s+/).filter(function (t) { return t && t !== 'allow-same-origin' && t.indexOf('allow-top-navigation') !== 0; });
+                sandbox = stoks.join(' ') || sandbox;
+            }
+            // Permissions-Policy: allow-list benign features only; never delegate camera/mic/geolocation or '*'.
+            var ALLOW_OK = { 'fullscreen': 1, 'picture-in-picture': 1, 'clipboard-write': 1, 'accelerometer': 1, 'gyroscope': 1, 'encrypted-media': 1, 'autoplay': 1, 'web-share': 1 };
+            var allow = 'fullscreen; picture-in-picture';
+            if (typeof emb.allow === 'string' && /^[a-z;\s-]+$/i.test(emb.allow)) {
+                var feats = emb.allow.toLowerCase().split(';').map(function (x) { return x.trim(); }).filter(function (x) { return x && ALLOW_OK[x.split(/\s+/)[0]]; });
+                if (feats.length) allow = feats.join('; ');
+            }
+            box.appendChild(h('iframe', { 'class': 'm-embed__frame', src: url, title: emb.title || 'Embedded content', loading: 'lazy', referrerpolicy: 'no-referrer-when-downgrade', allow: allow, allowfullscreen: '', sandbox: sandbox }));
+            bubble.appendChild(box);
             if (emb.caption) bubble.appendChild(h('p', { 'class': 'm-img__cap', text: emb.caption }));
             var openUrl = this._safeEmbed(emb.openUrl);
             if (openUrl && this.options.features.mapOpenButton !== false) {
@@ -974,6 +1145,76 @@
         });
         bubble.appendChild(list); row.appendChild(bubble); this.els.messages.appendChild(row); this._scroll();
         this.emit('messagerendered', { type: 'files', element: row });
+        return Promise.resolve();
+    };
+    DeraChat.prototype._renderForm = function (res) {
+        var self = this, cfg = res.form || {}, fields = cfg.fields || [], S = this.options.strings;
+        var row = this._row('bot'), bubble = this._mediaBubble(res);
+        var formEl = h('form', { 'class': 'm-form', novalidate: '' });
+        var getters = [];                                      // [{ name, get }] — array so every field is collected, even duplicate names
+        var TEXT_TYPES = ['text', 'email', 'tel', 'url', 'number', 'password', 'date', 'time', 'search', 'color'];
+        fields.forEach(function (f, idx) {
+            var name = f.name || ('field_' + idx), type = f.type || 'text';
+            var fid = 'dcf' + (self._uid = (self._uid || 0) + 1);
+            var wrap = h('div', { 'class': 'm-form__field' });
+            if (type === 'checkbox') {
+                var cb = h('input', { type: 'checkbox', 'class': 'm-form__check', id: fid, name: name });
+                if (f.checked || f.value === true) cb.checked = true;
+                if (f.required) cb.required = true;
+                wrap.appendChild(h('label', { 'class': 'm-form__checkrow', 'for': fid }, [cb, h('span', { text: f.label || name })]));
+                getters.push({ name: name, get: function () { return cb.checked; } });
+            } else if (type === 'radio') {
+                if (f.label) wrap.appendChild(h('span', { 'class': 'm-form__label', text: f.label + (f.required ? ' *' : '') }));
+                var group = h('div', { 'class': 'm-form__radios' });
+                (f.options || []).forEach(function (o, k) {
+                    var ov = isObj(o) ? o : { label: o, value: o }, rid = fid + '_' + k;
+                    // Group by the unique fid, not the config name — so two radio fields sharing a name stay independent.
+                    var input = h('input', { type: 'radio', name: fid, id: rid, value: String(ov.value != null ? ov.value : ov.label) });
+                    if (f.required && k === 0) input.required = true;
+                    if (f.value != null && String(f.value) === input.value) input.checked = true;
+                    group.appendChild(h('label', { 'class': 'm-form__radio', 'for': rid }, [input, h('span', { text: ov.label != null ? ov.label : String(ov.value) })]));
+                });
+                wrap.appendChild(group);
+                getters.push({ name: name, get: function () { var v = ''; Array.prototype.forEach.call(group.querySelectorAll('input'), function (r) { if (r.checked) v = r.value; }); return v; } });
+            } else {
+                if (f.label) wrap.appendChild(h('label', { 'class': 'm-form__label', 'for': fid, text: f.label + (f.required ? ' *' : '') }));
+                var ctrl;
+                if (type === 'textarea') {
+                    ctrl = h('textarea', { 'class': 'm-form__input', id: fid, name: name, rows: String(f.rows || 3), placeholder: f.placeholder || '' });
+                    if (f.value != null) ctrl.value = String(f.value);
+                } else if (type === 'select') {
+                    ctrl = h('select', { 'class': 'm-form__input', id: fid, name: name });
+                    if (f.placeholder) { var ph = h('option', { value: '', text: f.placeholder }); ph.disabled = true; ph.selected = true; ctrl.appendChild(ph); }
+                    (f.options || []).forEach(function (o) { var ov = isObj(o) ? o : { label: o, value: o }; var opt = h('option', { value: String(ov.value != null ? ov.value : ov.label), text: ov.label != null ? ov.label : String(ov.value) }); if (f.value != null && String(f.value) === opt.value) opt.selected = true; ctrl.appendChild(opt); });
+                } else {
+                    ctrl = h('input', { 'class': 'm-form__input', id: fid, name: name, type: TEXT_TYPES.indexOf(type) > -1 ? type : 'text', placeholder: f.placeholder || '' });
+                    if (f.value != null) ctrl.value = String(f.value);
+                    if (f.min != null) ctrl.setAttribute('min', f.min);
+                    if (f.max != null) ctrl.setAttribute('max', f.max);
+                    if (f.pattern) ctrl.setAttribute('pattern', f.pattern);
+                }
+                if (f.required) ctrl.required = true;
+                wrap.appendChild(ctrl);
+                getters.push({ name: name, get: function () { return ctrl.value; } });
+            }
+            formEl.appendChild(wrap);
+        });
+        var status = h('div', { 'class': 'm-form__status', 'aria-live': 'polite' });
+        var submit = h('button', { type: 'submit', 'class': 'm-form__submit', text: cfg.submitLabel || S.formSubmit });
+        formEl.appendChild(submit); formEl.appendChild(status);
+        formEl.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (formEl.checkValidity && !formEl.checkValidity()) { if (formEl.reportValidity) formEl.reportValidity(); return; }
+            var values = {};
+            getters.forEach(function (g) { values[g.name] = g.get(); });
+            var payload = { id: cfg.id || null, values: values, form: formEl, reset: function () { formEl.reset(); } };
+            if (!self.emit('form:submit', payload)) return;                 // cancelable
+            Array.prototype.forEach.call(formEl.elements, function (el) { el.disabled = true; });
+            status.textContent = cfg.successText || S.formSuccess; status.classList.add('is-ok');
+            self._scroll();
+        });
+        bubble.appendChild(formEl); row.appendChild(bubble); this.els.messages.appendChild(row); this._scroll();
+        this.emit('messagerendered', { type: 'form', element: row });
         return Promise.resolve();
     };
 
